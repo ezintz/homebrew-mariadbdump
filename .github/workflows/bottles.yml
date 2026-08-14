@@ -100,7 +100,7 @@ jobs:
           merge-multiple: true
 
       - name: Merge bottle hashes into formula
-        run: brew bottle --merge --write --no-commit *.bottle.json
+        run: brew bottle --merge --write --no-commit ./*.bottle.json
 
       - name: Commit updated formula
         run: |
