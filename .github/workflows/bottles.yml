@@ -1,0 +1,98 @@
+name: Build bottles
+
+on:
+  workflow_dispatch:
+    inputs:
+      formula:
+        description: "Formula name (without .rb), e.g. mariadbdump or mariadbdump@11.4"
+        required: true
+        default: mariadbdump
+  push:
+    branches: [main]
+    paths:
+      - "Formula/**.rb"
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - runner: macos-14 # arm64
+            os: arm64_sequoia
+          - runner: macos-13 # x86_64
+            os: x86_64_sonoma
+          - runner: ubuntu-latest
+            os: x86_64_linux
+    runs-on: ${{ matrix.runner }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: tap
+
+      - name: Set up Homebrew
+        uses: Homebrew/actions/setup-homebrew@master
+
+      - name: Tap this repo
+        run: brew tap-new --no-git ezintz/mariadbdump 2>/dev/null || true
+
+      - name: Point tap at checked-out formulae
+        run: |
+          tap_dir="$(brew --repo ezintz/mariadbdump)"
+          rm -rf "$tap_dir/Formula"
+          cp -R "$GITHUB_WORKSPACE/tap/Formula" "$tap_dir/Formula"
+
+      - name: Resolve formula name
+        id: formula
+        shell: bash
+        env:
+          FORMULA_INPUT: ${{ github.event.inputs.formula }}
+        run: |
+          name="$FORMULA_INPUT"
+          if [ -z "$name" ]; then name="mariadbdump"; fi
+          echo "name=$name" >> "$GITHUB_OUTPUT"
+
+      - name: Build bottle
+        env:
+          FORMULA_NAME: ${{ steps.formula.outputs.name }}
+          REPO: ${{ github.repository }}
+        run: |
+          cd "$(brew --repo ezintz/mariadbdump)"
+          brew install --build-bottle --verbose "ezintz/mariadbdump/$FORMULA_NAME"
+          brew bottle --json --root-url "https://github.com/$REPO/releases/download/bottles" \
+            "ezintz/mariadbdump/$FORMULA_NAME"
+
+      - name: Upload bottle artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: bottle-${{ matrix.os }}
+          path: |
+            *.bottle.tar.gz
+            *.bottle.json
+
+  merge:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Homebrew
+        uses: Homebrew/actions/setup-homebrew@master
+
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: bottle-*
+          merge-multiple: true
+
+      - name: Merge bottle hashes into formula
+        run: brew bottle --merge --write --no-commit *.bottle.json
+
+      - name: Commit updated formula
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add Formula
+          git diff --cached --quiet || git commit -m "Add bottles [ci]"
+
+      - name: Push
+        run: git push
