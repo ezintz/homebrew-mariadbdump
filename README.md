@@ -38,6 +38,16 @@ Actions used in the workflow are pinned to commit SHAs (not mutable tags)
 and Dependabot opens PRs to bump them — review the diff (new SHA, changed
 version comment) before merging, same as any dependency update.
 
+## Keeping patch versions current
+
+`.github/workflows/bump-versions.yml` runs weekly (and on demand via
+`workflow_dispatch`): it checks `archive.mariadb.org` for a newer patch
+release within each formula's *existing* major.minor line (e.g. `11.4.12`
+→ `11.4.13`) and opens a PR with the `url`/`sha256` bump if one exists. It
+never moves a formula to a different LTS line — that's still a deliberate,
+manual change (see below). Merging the PR triggers the bottle-build
+workflow for the new version.
+
 ## Adding a new pinned version
 
 1. Find the source tarball and checksum:

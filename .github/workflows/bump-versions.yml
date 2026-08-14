@@ -1,0 +1,36 @@
+name: Bump MariaDB LTS versions
+
+on:
+  workflow_dispatch: {}
+  schedule:
+    - cron: "0 6 * * 1" # weekly, Monday 06:00 UTC
+
+permissions:
+  contents: read
+
+jobs:
+  bump:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+
+      - name: Check for newer patch releases within each LTS line
+        run: bash .github/scripts/bump-mariadb-versions.sh
+
+      - name: Open PR with any version bumps
+        uses: peter-evans/create-pull-request@5f6978faf089d4d20b00c7766989d076bb2fc7f1 # v8.1.1
+        with:
+          commit-message: "Bump MariaDB LTS patch versions"
+          title: "Bump MariaDB LTS patch versions"
+          body: |
+            Automated check against https://archive.mariadb.org/ for newer
+            patch releases within each formula's existing major.minor line.
+
+            This never changes which LTS line a formula tracks — only the
+            patch version within it. Review the diff, then merging to
+            `main` triggers the bottle-build workflow for the new version.
+          branch: bump-mariadb-versions
+          delete-branch: true
