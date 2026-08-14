@@ -88,6 +88,8 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: write
+    outputs:
+      hashes: ${{ steps.hash.outputs.hashes }}
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
 
@@ -111,3 +113,30 @@ jobs:
 
       - name: Push
         run: git push
+
+      - name: Publish bottles to the "bottles" release
+        uses: softprops/action-gh-release@3d0d9888cb7fd7b750713d6e236d1fcb99157228 # v3.0.2
+        with:
+          tag_name: bottles
+          name: Bottles
+          body: Rolling release holding built Homebrew bottles. Formulae reference assets here via bottle root_url.
+          files: "*.bottle.tar.gz"
+
+      - name: Generate subject hashes for SLSA provenance
+        id: hash
+        run: echo "hashes=$(sha256sum ./*.bottle.tar.gz | base64 -w0)" >> "$GITHUB_OUTPUT"
+
+  provenance:
+    needs: merge
+    permissions:
+      actions: read
+      id-token: write
+      contents: write
+    # Intentionally a floating vX.Y.Z tag, not a pinned SHA: the generator
+    # verifies its own tag internally and requires this exact form — a SHA
+    # pin here breaks it. See https://github.com/slsa-framework/slsa-github-generator.
+    uses: slsa-framework/slsa-github-generator/.github/workflows/generator_generic_slsa3.yml@v2.1.0
+    with:
+      base64-subjects: "${{ needs.merge.outputs.hashes }}"
+      upload-assets: true
+      upload-tag-name: bottles
