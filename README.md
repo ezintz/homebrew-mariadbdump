@@ -23,7 +23,7 @@ built it. Before trusting a downloaded `.bottle.tar.gz`, verify it was built
 by this repo's workflow from a known commit:
 
 ```sh
-gh attestation verify mariadbdump@11.4--11.4.12.arm64_sequoia.bottle.tar.gz \
+gh attestation verify mariadbdump@11.4--11.4.12.arm64_sonoma.bottle.tar.gz \
   --repo ezintz/homebrew-mariadbdump
 ```
 

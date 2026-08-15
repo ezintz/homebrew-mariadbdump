@@ -25,8 +25,8 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - runner: macos-14 # arm64
-            os: arm64_sequoia
+          - runner: macos-14 # arm64, actually Sonoma (14.x) — brew's real bottle tag is arm64_sonoma
+            os: arm64_sonoma
           - runner: ubuntu-latest
             os: x86_64_linux
     runs-on: ${{ matrix.runner }}
@@ -59,7 +59,13 @@ jobs:
         run: |
           cd "$(brew --repo ezintz/mariadbdump)"
           brew install --build-bottle --verbose "ezintz/mariadbdump/$FORMULA_NAME"
-          brew bottle --json --root-url "https://github.com/$REPO/releases/download/bottles" \
+          # --no-rebuild: without it, brew compares the formula against
+          # origin/HEAD to auto-bump the rebuild number. setup-homebrew
+          # checks out exactly origin/HEAD, so the formula always matches
+          # itself and brew always bumps rebuild to 1, producing a
+          # "*.bottle.1.tar.gz" filename that the glob patterns below (and
+          # the merge job's `bottle --merge`) don't expect.
+          brew bottle --no-rebuild --json --root-url "https://github.com/$REPO/releases/download/bottles" \
             "ezintz/mariadbdump/$FORMULA_NAME"
 
       - name: Attest build provenance
