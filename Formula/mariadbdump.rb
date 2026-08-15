@@ -5,6 +5,12 @@ class Mariadbdump < Formula
   sha256 "bd023a4959faf012db7f0ebfc0d276729e67e5443df193163f98d80fdfc524c9"
   license "GPL-2.0-only"
 
+  bottle do
+    root_url "https://github.com/ezintz/homebrew-mariadbdump/releases/download/bottles"
+    sha256 arm64_sonoma: "f1b37ddaef8831c719056df438cc0a7000ef5fbac9c803d35b6c05be0968068a"
+    sha256 x86_64_linux: "a2adac0a1fb62f60b0815aa736c3df98afbb1f6ad69d908205e73b3cf1bff7cf"
+  end
+
   depends_on "bison" => :build
   depends_on "cmake" => :build
   depends_on "pkg-config" => :build
