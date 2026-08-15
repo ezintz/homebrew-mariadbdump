@@ -27,28 +27,20 @@ jobs:
         include:
           - runner: macos-14 # arm64
             os: arm64_sequoia
-          - runner: macos-13 # x86_64
-            os: x86_64_sonoma
           - runner: ubuntu-latest
             os: x86_64_linux
     runs-on: ${{ matrix.runner }}
     steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        with:
-          path: tap
-          persist-credentials: false
-
+      # No checkout here: setup-homebrew detects this repo as a tap (name
+      # matches `owner/homebrew-*`) and taps it itself, fetching GITHUB_SHA
+      # and making it available both at $(brew --repo ezintz/mariadbdump)
+      # and (symlinked) at $GITHUB_WORKSPACE. A separate checkout would just
+      # get wiped out by that process, since it clears $GITHUB_WORKSPACE
+      # before laying its own clone down there.
       - name: Set up Homebrew
         uses: Homebrew/actions/setup-homebrew@13f73d7cbd2f8f180d85d8f7201698cf110bf84c # master (2026-08-12)
-
-      - name: Tap this repo
-        run: brew tap-new --no-git ezintz/mariadbdump 2>/dev/null || true
-
-      - name: Point tap at checked-out formulae
-        run: |
-          tap_dir="$(brew --repo ezintz/mariadbdump)"
-          rm -rf "$tap_dir/Formula"
-          cp -R "$GITHUB_WORKSPACE/tap/Formula" "$tap_dir/Formula"
+        with:
+          token: ${{ github.token }}
 
       - name: Resolve formula name
         id: formula
@@ -91,10 +83,14 @@ jobs:
     outputs:
       hashes: ${{ steps.hash.outputs.hashes }}
     steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
+      # No checkout: setup-homebrew taps this repo itself (see the build
+      # job's comment above) and needs its own `token` input to leave the
+      # git credentials in place for the push step below, since it replaces
+      # $GITHUB_WORKSPACE/.git with a fresh clone.
       - name: Set up Homebrew
         uses: Homebrew/actions/setup-homebrew@13f73d7cbd2f8f180d85d8f7201698cf110bf84c # master (2026-08-12)
+        with:
+          token: ${{ github.token }}
 
       - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
         with:
