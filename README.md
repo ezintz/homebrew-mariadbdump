@@ -57,3 +57,7 @@ workflow for the new version.
    removed) and `desc`.
 3. `brew install --build-from-source ./Formula/mariadbdump@X.Y.rb` to test
    locally before committing.
+
+## License
+
+[MIT](LICENSE)
