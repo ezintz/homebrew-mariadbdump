@@ -38,7 +38,7 @@ jobs:
       # get wiped out by that process, since it clears $GITHUB_WORKSPACE
       # before laying its own clone down there.
       - name: Set up Homebrew
-        uses: Homebrew/actions/setup-homebrew@13f73d7cbd2f8f180d85d8f7201698cf110bf84c # master (2026-08-12)
+        uses: Homebrew/actions/setup-homebrew@e99025eb970cfa124b8284a35463d87426917478 # master (2026-08-12)
         with:
           token: ${{ github.token }}
 
@@ -94,7 +94,7 @@ jobs:
       # git credentials in place for the push step below, since it replaces
       # $GITHUB_WORKSPACE/.git with a fresh clone.
       - name: Set up Homebrew
-        uses: Homebrew/actions/setup-homebrew@13f73d7cbd2f8f180d85d8f7201698cf110bf84c # master (2026-08-12)
+        uses: Homebrew/actions/setup-homebrew@e99025eb970cfa124b8284a35463d87426917478 # master (2026-08-12)
         with:
           token: ${{ github.token }}
 
